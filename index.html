@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
+      crossorigin="anonymous"
+    />
+  </head>
+  <body>
+    <div class="row m-5">
+      <div class="table-responsive w-75">
+        <table class="table" id="tb-products">
+          <thead>
+            <colgroup>
+              <col style="width:0.01%">
+              <col style="width:0.1%">
+              <col style="width:0.1%">
+              <col style="width:0.1%">
+              <col style="width:0.1%">
+            </colgroup>
+            <tr>
+              <th>ID</th>
+              <th>Nombre</th>
+              <th>Tipo</th>
+              <th>Precio</th>
+              <th>Fecha</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </body>
+  <script>
+    const host = "http://localhost/chat-socket/controllers";
+    let ws;
+
+    refresh();
+    
+    async function listar(){
+      const params = new URLSearchParams();
+      params.append("operation", "getAll");
+      const data = await fetch(`${host}/producto.controller.php?operation=getAll`);
+      const resp = await data.json();
+
+      function selector(value) {
+        return document.querySelector(`#${value}`);
+      }
+
+      //selector("tb-products tbody").innerHTML="";
+      resp.forEach(x=>{
+        selector("tb-products tbody").innerHTML+=`
+          <tr>
+            <td>${x.idproducto}</td>
+            <td>${x.nombre}</td>
+            <td>${x.tipo}</td>
+            <td>${x.precio}</td>
+            <td>${x.fecha_registro}</td>
+          </tr>
+        `;
+      });
+    }
+
+    function refresh(){
+      ws = new WebSocket("ws://localhost:8080");
+      ws.onopen = ()=>{
+        //Enviar el nickname al servidor (revise server console)
+        ws.send(JSON.stringify({
+          type:'login',
+          nickname:'Joaquin',
+          isAdd:1
+        }));
+      };
+
+      ws.onmessage = async(event)=>{
+        try{
+          //WS: JSON > ARRAY
+          const data = JSON.parse(event.data);
+          console.log(data);
+          await listar();
+          enviarFalse();
+          /**
+          if(data.type === "message"){ //mensaje que envia los usuarios
+            addMessage(`${data.nickname}: ${data.message}`,"user-message");
+          }else if(data.type==="system"){ //mensaje que envia el servidor
+            addMessage(data.message, "system-message");
+          }**/
+        }catch(e){
+          //addMessage(event.data,"system-message");
+          console.error("Hubo un error: "+ e.message);
+        }
+      };
+
+      ws.onclose = ()=>{
+        console.log("Desconectado del servidor");
+        //addMessage("Desconectado del servidor", "system-message");
+      }; //Dejas de enviar el mensaje hasta aqui
+
+      ws.onerror = (error)=>{
+        console.error("Error en la conexion: "+ error.message);
+      };
+    }
+
+    function enviarFalse(){
+      ws.send(JSON.stringify({
+        type:'message',
+        message: 'fue enviado',
+        isAdd:1
+      }));
+    }
+    
+  </script>
+</html>
