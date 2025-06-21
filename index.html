@@ -15,14 +15,14 @@
     <div class="row m-5">
       <div class="table-responsive w-75">
         <table class="table" id="tb-products">
+          <colgroup>
+            <col style="width:0.01%">
+            <col style="width:0.1%">
+            <col style="width:0.1%">
+            <col style="width:0.1%">
+            <col style="width:0.1%">
+          </colgroup>
           <thead>
-            <colgroup>
-              <col style="width:0.01%">
-              <col style="width:0.1%">
-              <col style="width:0.1%">
-              <col style="width:0.1%">
-              <col style="width:0.1%">
-            </colgroup>
             <tr>
               <th>ID</th>
               <th>Nombre</th>
@@ -40,7 +40,17 @@
     const host = "http://localhost/chat-socket/controllers";
     let ws;
 
-    refresh();
+    function selector(value) {
+      return document.querySelector(`#${value}`);
+    }
+
+    (()=>{
+      refresh();
+    })();
+
+    (async()=>{
+      await listar();
+    })();
     
     async function listar(){
       const params = new URLSearchParams();
@@ -48,9 +58,6 @@
       const data = await fetch(`${host}/producto.controller.php?operation=getAll`);
       const resp = await data.json();
 
-      function selector(value) {
-        return document.querySelector(`#${value}`);
-      }
 
       //selector("tb-products tbody").innerHTML="";
       resp.forEach(x=>{
@@ -72,8 +79,8 @@
         //Enviar el nickname al servidor (revise server console)
         ws.send(JSON.stringify({
           type:'login',
-          nickname:'Joaquin',
-          isAdd:1
+          nickname:'Martin',
+          add:0
         }));
       };
 
@@ -82,14 +89,13 @@
           //WS: JSON > ARRAY
           const data = JSON.parse(event.data);
           console.log(data);
-          await listar();
-          enviarFalse();
-          /**
-          if(data.type === "message"){ //mensaje que envia los usuarios
-            addMessage(`${data.nickname}: ${data.message}`,"user-message");
-          }else if(data.type==="system"){ //mensaje que envia el servidor
-            addMessage(data.message, "system-message");
-          }**/
+          //enviarFalse();
+          
+          if(data.add === 1){ //mensaje que envia los usuarios
+            //console.log("aaaaa");
+            selector("tb-products tbody").innerHTML="";
+            await listar();
+          }
         }catch(e){
           //addMessage(event.data,"system-message");
           console.error("Hubo un error: "+ e.message);

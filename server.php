@@ -143,28 +143,22 @@ while (true) {
     if (!empty($message)) {
       $decoded = json_decode($message, true);
       
-      $add = null;
-      if($decoded['isAdd']==1){
-        $add = true;
-      }else{
-        $add = false;
-      }
       if ($decoded != null || $decoded != "") {
         if ($decoded['type'] === 'login') {
           $nicknames[$client_id] = $decoded['nickname'];
           $response = json_encode([
             'type' => 'system',
-            'message' => "{$decoded['nickname']} se ha unido al chat"
+            'message' => "{$decoded['nickname']} se ha unido al chat",
+            'add'=>$decoded['add']
           ]);
-          echo "{$decoded['nickname']} se ha unido al chat {$decoded['isAdd']}\n";
+          echo "{$decoded['nickname']} se ha unido al chat\n";
         } else {
           $response = json_encode([
             'type' => 'message',
             'nickname' => $nicknames[$client_id],
             'message' => $decoded['message'],
-            'isAdd'=>1
+            'add' => $decoded['add']
           ]);
-          echo "{$decoded['isAdd']}";
         }
 
         foreach ($clients as $client) {
